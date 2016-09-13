@@ -1,55 +1,46 @@
 package com.github.yamill.orientation;
-
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.hardware.SensorManager;
 import android.util.Log;
-
+import android.view.OrientationEventListener;
 import com.facebook.common.logging.FLog;
-import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.Callback;
-import com.facebook.react.bridge.LifecycleEventListener;
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.*;
 import com.facebook.react.common.ReactConstants;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.*;
 import javax.annotation.Nullable;
 
 public class OrientationModule extends ReactContextBaseJavaModule implements LifecycleEventListener{
-    final BroadcastReceiver receiver;
 
+    /**
+     * @param reactContext
+     */
     public OrientationModule(ReactApplicationContext reactContext) {
         super(reactContext);
         final ReactApplicationContext ctx = reactContext;
 
-        receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Configuration newConfig = intent.getParcelableExtra("newConfig");
-                Log.d("receiver", String.valueOf(newConfig.orientation));
-
-                String orientationValue = newConfig.orientation == 1 ? "PORTRAIT" : "LANDSCAPE";
-
+//		
+        OrientationEventListener listener = new OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
+            public void onOrientationChanged (int orientation) {
+//				Trigger "orientationDidChange" Event
                 WritableMap params = Arguments.createMap();
-                params.putString("orientation", orientationValue);
+                params.putString("orientation", getOrientationString(orientation));
                 if (ctx.hasActiveCatalystInstance()) {
-                    ctx
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit("orientationDidChange", params);
+                    ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("orientationDidChange", params);
+                }
+
+//				Trigger "specificOrientationDidChange" Event
+                WritableMap params = Arguments.createMap();
+                params.putString("orientation", getSpecificOrientationString(orientation));
+                if (ctx.hasActiveCatalystInstance()) {
+                    ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("specificOrientationDidChange", params);
                 }
             }
         };
-        ctx.addLifecycleEventListener(this);
+        listener.enable();
     }
 
     @Override
@@ -58,16 +49,10 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void getOrientation(Callback callback) {
+    public void getOrientation (Callback callback) {
         final int orientationInt = getReactApplicationContext().getResources().getConfiguration().orientation;
 
-        String orientation = this.getOrientationString(orientationInt);
-
-        if (orientation == "null") {
-            callback.invoke(orientationInt, null);
-        } else {
-            callback.invoke(null, orientation);
-        }
+        callback.invoke(null, this.getOrientationString(orientationInt));
     }
 
     @ReactMethod
@@ -130,25 +115,71 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
         return constants;
     }
 
-    private String getOrientationString(int orientation) {
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            return "LANDSCAPE";
-        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            return "PORTRAIT";
-        } else if (orientation == Configuration.ORIENTATION_UNDEFINED) {
-            return "UNKNOWN";
-        } else {
-            return "null";
-        }
+    /**
+     * @param orientation
+     */
+    private String getOrientationString (int orientation) {
+    	switch ( orientation ) {
+    		case Configuration.ORIENTATION_LANDSCAPE: {
+    			return "LANDSCAPE";
+    		}
+    		case Configuration.ORIENTATION_PORTRAIT: {
+    			return "PORTRAIT";
+    		}
+    		default {
+    			return "UNKNOWN";
+    		}
+    	}
+    }
+
+    /**
+     * @param orientation
+     */
+    private String getSpecificOrientationString (int orientation) {
+    	switch ( orientation ) {
+    		case Configuration.ORIENTATION_PORTRAIT: {
+    			return "PORTRAIT";
+    		}
+    		case 90: {
+    			return "LANDSCAPE-LEFT";
+    		}
+    		case 180: {
+    			return "PORTRAITUPSIDEDOWN";
+    		}
+    		case 270: {
+    			return "LANDSCAPE-RIGHT";
+    		}
+    		default {
+    			return "UNKNOWN";
+    		}
+    	}
+    }
+
+    /**
+     * @param orientation
+     */
+    private String getOrientationString (int orientation) {
+    	switch ( orientation ) {
+    		case Configuration.: {
+    			return "LANDSCAPE";
+    		}
+    		case Configuration.ORIENTATION_PORTRAIT: {
+    			return "PORTRAIT";
+    		}
+    		default {
+    			return "UNKNOWN";
+    		}
+    	}
     }
 
     @Override
-    public void onHostResume() {
+    public void onHostResume () {
         final Activity activity = getCurrentActivity();
 
         assert activity != null;
         activity.registerReceiver(receiver, new IntentFilter("onConfigurationChanged"));
     }
+
     @Override
     public void onHostPause() {
         final Activity activity = getCurrentActivity();
