@@ -1,19 +1,15 @@
 package com.github.yamill.orientation;
 import android.app.Activity;
-import android.content.*;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.OrientationEventListener;
-import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.*;
-import com.facebook.react.common.ReactConstants;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import java.util.*;
 import javax.annotation.Nullable;
 
-public class OrientationModule extends ReactContextBaseJavaModule implements LifecycleEventListener{
+public class OrientationModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     /**
      * @param reactContext
@@ -24,7 +20,9 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
 
 //		
         OrientationEventListener listener = new OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
-            public void onOrientationChanged (int orientation) {
+            public void onOrientationChanged(int orientation) {
+                Log.d("onOrientationChanged", String.valueOf(orientation) );
+
 //				Trigger "orientationDidChange" Event
                 WritableMap params = Arguments.createMap();
                 params.putString("orientation", getOrientationString(orientation));
@@ -33,10 +31,10 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
                 }
 
 //				Trigger "specificOrientationDidChange" Event
-                WritableMap params = Arguments.createMap();
-                params.putString("orientation", getSpecificOrientationString(orientation));
+                WritableMap specificParams = Arguments.createMap();
+                specificParams.putString("specificOrientation", getSpecificOrientationString(orientation));
                 if (ctx.hasActiveCatalystInstance()) {
-                    ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("specificOrientationDidChange", params);
+                    ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("specificOrientationDidChange", specificParams);
                 }
             }
         };
@@ -49,7 +47,7 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void getOrientation (Callback callback) {
+    public void getOrientation(Callback callback) {
         final int orientationInt = getReactApplicationContext().getResources().getConfiguration().orientation;
 
         callback.invoke(null, this.getOrientationString(orientationInt));
@@ -117,91 +115,61 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
 
     /**
      * @param orientation
+     * @return LANDSCAPE|PORTRAIT|UNKNOWN
      */
     private String getOrientationString (int orientation) {
-    	switch ( orientation ) {
-    		case Configuration.ORIENTATION_LANDSCAPE: {
-    			return "LANDSCAPE";
-    		}
-    		case Configuration.ORIENTATION_PORTRAIT: {
-    			return "PORTRAIT";
-    		}
-    		default {
-    			return "UNKNOWN";
-    		}
-    	}
+        switch (orientation) {
+            case 0:
+            case 180: {
+                return "PORTRAIT";
+            }
+            case 90:
+            case 270: {
+                return "LANDSCAPE";
+            }
+            default: {
+                return "UNKNOWN";
+            }
+        }
     }
 
     /**
      * @param orientation
+     * @return PORTRAIT|LANDSCAPE-LEFT|PORTRAITUPSIDEDOWN|LANDSCAPE-RIGHT|UNKNOWN
      */
     private String getSpecificOrientationString (int orientation) {
-    	switch ( orientation ) {
-    		case Configuration.ORIENTATION_PORTRAIT: {
-    			return "PORTRAIT";
-    		}
-    		case 90: {
-    			return "LANDSCAPE-LEFT";
-    		}
-    		case 180: {
-    			return "PORTRAITUPSIDEDOWN";
-    		}
-    		case 270: {
-    			return "LANDSCAPE-RIGHT";
-    		}
-    		default {
-    			return "UNKNOWN";
-    		}
-    	}
-    }
-
-    /**
-     * @param orientation
-     */
-    private String getOrientationString (int orientation) {
-    	switch ( orientation ) {
-    		case Configuration.: {
-    			return "LANDSCAPE";
-    		}
-    		case Configuration.ORIENTATION_PORTRAIT: {
-    			return "PORTRAIT";
-    		}
-    		default {
-    			return "UNKNOWN";
-    		}
-    	}
+        switch (orientation) {
+            case 0: {
+                return "PORTRAIT";
+            }
+            case 90: {
+                return "LANDSCAPE-RIGHT";
+            }
+            case 180: {
+                return "PORTRAITUPSIDEDOWN";
+            }
+            case 270: {
+                return "LANDSCAPE-LEFT";
+            }
+            default: {
+                return "UNKNOWN";
+            }
+        }
     }
 
     @Override
-    public void onHostResume () {
+    public void onHostResume() {
         final Activity activity = getCurrentActivity();
-
-        assert activity != null;
-        activity.registerReceiver(receiver, new IntentFilter("onConfigurationChanged"));
     }
 
     @Override
     public void onHostPause() {
         final Activity activity = getCurrentActivity();
-        if (activity == null) return;
-        try
-        {
-            activity.unregisterReceiver(receiver);
-        }
-        catch (java.lang.IllegalArgumentException e) {
-            FLog.e(ReactConstants.TAG, "receiver already unregistered", e);
-        }
     }
 
     @Override
     public void onHostDestroy() {
         final Activity activity = getCurrentActivity();
         if (activity == null) return;
-        try
-        {
-            activity.unregisterReceiver(receiver);
-        }
-        catch (java.lang.IllegalArgumentException e) {
-            FLog.e(ReactConstants.TAG, "receiver already unregistered", e);
-        }}
     }
+}
