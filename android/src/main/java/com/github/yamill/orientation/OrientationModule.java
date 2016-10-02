@@ -21,7 +21,7 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
 //		
         OrientationEventListener listener = new OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
             public void onOrientationChanged(int orientation) {
-                Log.d("onOrientationChanged", String.valueOf(orientation) );
+//                Log.d("onOrientationChanged", String.valueOf(orientation) );
 
 //				Trigger "orientationDidChange" Event
                 WritableMap params = Arguments.createMap();
