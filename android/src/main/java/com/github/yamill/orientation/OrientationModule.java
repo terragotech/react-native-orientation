@@ -18,10 +18,10 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
         super(reactContext);
         final ReactApplicationContext ctx = reactContext;
 
-//		
+//
         OrientationEventListener listener = new OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
             public void onOrientationChanged(int orientation) {
-//                Log.d("onOrientationChanged", String.valueOf(orientation) );
+                Log.d("onOrientationChanged", String.valueOf(orientation) );
 
 //				Trigger "orientationDidChange" Event
                 WritableMap params = Arguments.createMap();
@@ -159,17 +159,16 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
 
     @Override
     public void onHostResume() {
-        final Activity activity = getCurrentActivity();
+
     }
 
     @Override
     public void onHostPause() {
-        final Activity activity = getCurrentActivity();
+
     }
 
     @Override
     public void onHostDestroy() {
-        final Activity activity = getCurrentActivity();
-        if (activity == null) return;
+
     }
 }
